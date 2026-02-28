@@ -25,9 +25,10 @@ type Props = {
   onAddComment: (taskId: string, comment: { author: string; content: string; type: "note" | "update" | "blocker" }) => void
   onUpdateProgress: (taskId: string, progress: number) => void
   onComplete: (taskId: string) => void
+  onRunAgent?: (taskId: string) => void
 }
 
-export function TaskDetail({ task, agent, onClose, onAddComment, onUpdateProgress, onComplete }: Props) {
+export function TaskDetail({ task, agent, onClose, onAddComment, onUpdateProgress, onComplete, onRunAgent }: Props) {
   const [commentText, setCommentText] = useState("")
   const [commentType, setCommentType] = useState<"note" | "update" | "blocker">("note")
   const [progress, setProgress] = useState(task.progress)
@@ -105,6 +106,14 @@ export function TaskDetail({ task, agent, onClose, onAddComment, onUpdateProgres
                 style={{ width: `${progress}%` }}
               />
             </div>
+            {task.status !== "done" && task.assignedAgentId && onRunAgent && (
+              <button
+                onClick={() => onRunAgent(task.id)}
+                className="w-full py-2 rounded border border-purple-400/40 bg-purple-400/10 text-purple-400 font-mono text-xs font-semibold hover:bg-purple-400/20 transition-colors mb-2"
+              >
+                ▶ RUN AGENT
+              </button>
+            )}
             {task.status !== "done" && (
               <button
                 onClick={() => onComplete(task.id)}

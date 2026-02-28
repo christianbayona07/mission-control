@@ -28,6 +28,14 @@ export default function Dashboard() {
   const [assignTarget, setAssignTarget] = useState<Agent | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showAddTask, setShowAddTask] = useState(false)
+  const [runningAgents, setRunningAgents] = useState<Set<string>>(new Set())
+
+
+  const handleRunAgent = async (taskId: string) => {
+    setRunningAgents(prev => new Set(prev).add(taskId))
+    await fetch("/api/run-agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId }) })
+    setTimeout(() => setRunningAgents(prev => { const s = new Set(prev); s.delete(taskId); return s }), 5000)
+  }
 
   const activeTasks = tasks.filter((t) => t.status === "in_progress" || t.status === "review")
   const pendingTasks = tasks.filter((t) => t.status === "todo")
@@ -133,6 +141,7 @@ export default function Dashboard() {
           onAddComment={addComment}
           onUpdateProgress={updateProgress}
           onComplete={(id) => { completeTask(id); setSelectedTask(null) }}
+          onRunAgent={handleRunAgent}
         />
       )}
     </div>

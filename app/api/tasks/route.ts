@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { readState, writeState } from "@/lib/state"
-import { Task } from "@/lib/types"
+import { Task, Comment } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
@@ -31,9 +31,23 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const { id, ...updates } = await req.json()
+    const body = await req.json()
+    const { id, _addComment, ...updates } = body
     const state = readState()
-    state.tasks = state.tasks.map((t: Task) => t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t)
+
+    state.tasks = state.tasks.map((t: Task) => {
+      if (t.id !== id) return t
+      if (_addComment) {
+        const newComment: Comment = {
+          id: `c-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          ..._addComment,
+        }
+        return { ...t, ...updates, comments: [...t.comments, newComment], updatedAt: new Date().toISOString() }
+      }
+      return { ...t, ...updates, updatedAt: new Date().toISOString() }
+    })
+
     writeState(state)
     return NextResponse.json(state.tasks)
   } catch {
