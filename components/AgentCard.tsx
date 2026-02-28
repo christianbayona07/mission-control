@@ -34,7 +34,15 @@ export function AgentCard({ agent, onAssign, compact }: Props) {
             <div className="text-slate-400 text-xs">{agent.role}</div>
           </div>
         </div>
-        <StatusBadge status={agent.status} />
+        <div className="flex flex-col items-end gap-1">
+          <StatusBadge status={agent.status} />
+          {(agent as any).running && (
+            <span className="flex items-center gap-1 text-purple-400 font-mono text-xs animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+              RUNNING
+            </span>
+          )}
+        </div>
       </div>
 
       {!compact && (

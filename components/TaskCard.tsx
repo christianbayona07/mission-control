@@ -25,7 +25,19 @@ export function TaskCard({ task, agentName, onComplete }: Props) {
   const p = priorityConfig[task.priority]
 
   return (
-    <div className={`bg-[#0f0f1a] rounded-lg border p-3 ${task.isMvp ? "border-orange-400/20" : "border-[#1a1a2e]"}`}>
+    <div className={`bg-[#0f0f1a] rounded-lg border p-3 transition-all ${(task as any).running ? "border-purple-400/40 shadow-[0_0_20px_rgba(168,85,247,0.1)]" : task.isMvp ? "border-orange-400/20" : "border-[#1a1a2e]"}`}>
+            {(task as any).running && (
+        <div className="flex items-center gap-2 mb-2 px-2 py-1 rounded bg-purple-400/10 border border-purple-400/30">
+          <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+          <span className="text-purple-400 font-mono text-xs font-bold animate-pulse">AGENT RUNNING</span>
+          <span className="ml-auto text-purple-300 font-mono text-xs">{task.progress}%</span>
+        </div>
+      )}
+      {task.progress > 0 && task.status !== "done" && (
+        <div className="w-full bg-[#0a0a0f] rounded-full h-1 mb-2">
+          <div className="h-1 rounded-full bg-gradient-to-r from-cyan-500 to-green-400 transition-all duration-1000" style={{ width: `${task.progress}%` }} />
+        </div>
+      )}
       <div className="flex items-start gap-2">
         <div className="mt-0.5">{statusIcon[task.status]}</div>
         <div className="flex-1 min-w-0">

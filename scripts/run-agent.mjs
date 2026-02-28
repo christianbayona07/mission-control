@@ -1,10 +1,6 @@
 #!/usr/bin/env node
-/**
- * run-agent.mjs — spawns Claude Code for a task and reports back to Mission Control
- * Usage: node run-agent.mjs <taskId>
- */
 import { spawn } from "child_process"
-import { readFileSync, writeFileSync } from "fs"
+import { readFileSync } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
 
@@ -18,41 +14,16 @@ if (!taskId) { console.error("Usage: node run-agent.mjs <taskId>"); process.exit
 
 function readState() { return JSON.parse(readFileSync(STATE_FILE, "utf-8")) }
 
+async function patchTask(id, updates) {
+  await fetch(`${API}/tasks`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...updates }) })
+}
+
+async function patchAgent(id, updates) {
+  await fetch(`${API}/agents`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...updates }) })
+}
+
 async function postComment(taskId, author, content, type = "update") {
-  try {
-    await fetch(`${API}/tasks`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: taskId, _addComment: { author, content, type } }),
-    })
-  } catch(e) { console.error("Failed to post comment:", e.message) }
-}
-
-async function updateProgress(taskId, progress) {
-  try {
-    await fetch(`${API}/tasks`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: taskId, progress }),
-    })
-  } catch(e) { console.error("Failed to update progress:", e.message) }
-}
-
-async function completeTask(taskId, agentId) {
-  try {
-    await fetch(`${API}/tasks`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: taskId, status: "done", progress: 100 }),
-    })
-    if (agentId) {
-      await fetch(`${API}/agents`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: agentId, status: "available", currentTask: null, currentProject: null }),
-      })
-    }
-  } catch(e) { console.error("Failed to complete task:", e.message) }
+  await fetch(`${API}/tasks`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: taskId, _addComment: { author, content, type } }) })
 }
 
 async function main() {
@@ -65,27 +36,27 @@ async function main() {
   const agentName = agent?.name ?? "JARVIS"
   const projectDir = join(PROJECTS_DIR, project?.name?.toLowerCase().replace(/\s+/g, "-") ?? "mission-control")
 
-  console.log(`[${agentName}] Starting task: ${task.title}`)
-  console.log(`[${agentName}] Project dir: ${projectDir}`)
+  console.log(`[${agentName}] Starting: ${task.title}`)
 
-  await postComment(taskId, agentName, `Starting work on: ${task.title}. Analyzing codebase...`, "update")
-  await updateProgress(taskId, 10)
+  // Set running state
+  await patchTask(taskId, { running: true, progress: 5 })
+  await patchAgent(agent?.id, { status: "active", running: true, currentTask: task.title, currentProject: project?.name, lastActive: new Date().toISOString() })
+  await postComment(taskId, agentName, `🚀 Starting: ${task.title}`, "update")
 
-  const prompt = `You are ${agentName}, a ${agent?.role ?? "software engineer"} AI agent.
+  const prompt = `You are ${agentName}, a ${agent?.role ?? "software engineer"} AI agent working on the Mission Control project.
 
-Your task: ${task.title}
+Task: ${task.title}
 Description: ${task.description}
 Priority: ${task.priority}
 Department: ${task.department}
 
 Instructions:
-1. Analyze the codebase and understand the current state
-2. Implement the task fully and correctly
-3. Write clean, production-ready code
-4. After completing, run: curl -s -X PATCH http://localhost:3001/api/tasks -H "Content-Type: application/json" -d '{"id":"${taskId}","progress":90,"status":"review"}'
-5. When completely finished, run: openclaw system event --text "Agent ${agentName} completed task: ${task.title}" --mode now
+- Analyze the codebase and implement the task
+- Write clean, production-ready code
+- Focus on MVP first
+- When done, run: curl -s -X PATCH http://localhost:3001/api/tasks -H "Content-Type: application/json" -d '{"id":"${taskId}","progress":95}'
 
-Focus on the MVP. Keep it clean and working.`
+Keep it focused and working.`
 
   const claude = spawn("claude", ["--dangerously-skip-permissions", prompt], {
     cwd: projectDir,
@@ -94,41 +65,35 @@ Focus on the MVP. Keep it clean and working.`
   })
 
   let output = ""
-  let lastProgress = 10
-  let progressInterval = setInterval(async () => {
+  let lastProgress = 5
+  const progressInterval = setInterval(async () => {
     if (lastProgress < 85) {
-      lastProgress += Math.floor(Math.random() * 8) + 3
-      await updateProgress(taskId, Math.min(85, lastProgress))
+      lastProgress = Math.min(85, lastProgress + Math.floor(Math.random() * 6) + 2)
+      await patchTask(taskId, { progress: lastProgress })
+      await patchAgent(agent?.id, { lastActive: new Date().toISOString() })
     }
-  }, 30000)
+  }, 20000)
 
-  claude.stdout.on("data", (data) => {
-    const text = data.toString()
-    output += text
-    process.stdout.write(text)
-  })
-
-  claude.stderr.on("data", (data) => {
-    process.stderr.write(data.toString())
-  })
+  claude.stdout.on("data", d => { output += d.toString(); process.stdout.write(d) })
+  claude.stderr.on("data", d => process.stderr.write(d))
 
   claude.on("close", async (code) => {
     clearInterval(progressInterval)
-    console.log(`\n[${agentName}] Process exited with code ${code}`)
 
-    // Post a summary comment
-    const summary = output.slice(-800).trim()
-    if (summary) {
-      await postComment(taskId, agentName, `Work complete. Summary:\n${summary}`, "update")
-    }
+    // Clear running state
+    await patchTask(taskId, { running: false })
+    await patchAgent(agent?.id, { running: false })
+
+    const summary = output.slice(-600).trim()
+    if (summary) await postComment(taskId, agentName, summary, "update")
 
     if (code === 0) {
-      await completeTask(taskId, agent?.id)
-      await postComment(taskId, "JARVIS", `${agentName} has completed this task. Ready for review.`, "note")
-      console.log(`[JARVIS] Task ${taskId} marked complete.`)
+      await patchTask(taskId, { status: "review", progress: 100, running: false })
+      await patchAgent(agent?.id, { status: "available", running: false, currentTask: null, currentProject: null })
+      await postComment(taskId, "JARVIS", `✅ ${agentName} completed this task. Moved to review.`, "note")
     } else {
-      await postComment(taskId, agentName, `Encountered an issue (exit code ${code}). Needs attention.`, "blocker")
-      await updateProgress(taskId, lastProgress)
+      await postComment(taskId, agentName, `⚠️ Encountered an issue (exit ${code}). Needs attention.`, "blocker")
+      await patchTask(taskId, { running: false })
     }
   })
 }
