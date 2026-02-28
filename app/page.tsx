@@ -24,7 +24,7 @@ const DEPARTMENTS: Department[] = [
 ]
 
 export default function Dashboard() {
-  const { agents, tasks, projects, assignAgent, completeTask, addTask, addComment, updateProgress } = useAgentStore()
+  const { agents, tasks, projects, lastUpdated, assignAgent, completeTask, addTask, addComment, updateProgress } = useAgentStore()
   const [assignTarget, setAssignTarget] = useState<Agent | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showAddTask, setShowAddTask] = useState(false)
@@ -41,6 +41,11 @@ export default function Dashboard() {
           <p className="text-slate-500 text-sm font-mono mt-0.5">AI AGENT OPERATIONS · REAL-TIME</p>
         </div>
         <div className="flex items-center gap-4">
+          {lastUpdated && (
+            <span className="text-slate-600 font-mono text-xs">
+              synced {lastUpdated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          )}
           <button
             onClick={() => setShowAddTask(true)}
             className="flex items-center gap-2 px-3 py-2 rounded border border-cyan-400/40 bg-cyan-400/10 text-cyan-400 font-mono text-xs font-semibold hover:bg-cyan-400/20 transition-colors"
