@@ -36,13 +36,14 @@ async function fetchState() {
 export function AgentStoreProvider({ children }: { children: React.ReactNode }) {
   const [agents, setAgents] = useState<Agent[]>(mockAgents)
   const [tasks, setTasks] = useState<Task[]>(mockTasks)
-  const [projects] = useState<Project[]>(mockProjects)
+  const [projects, setProjects] = useState<Project[]>(mockProjects)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [loading, setLoading] = useState(true)
 
   const loadState = useCallback(async () => {
     const state = await fetchState()
     if (state) {
+      setProjects(state.projects)
       setAgents(state.agents)
       setTasks(state.tasks)
       setLastUpdated(new Date(state.updatedAt))
