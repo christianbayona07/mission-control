@@ -9,16 +9,23 @@ function sync() {
   try {
     const state = JSON.parse(readFileSync(STATE_FILE, "utf-8"))
     const now = new Date().toISOString()
+
+    // Only update lastActive for agents that are ACTUALLY running (running: true)
     state.agents = state.agents.map((a) =>
-      a.status === "active" ? { ...a, lastActive: now } : a
+      a.status === "active" && a.running === true
+        ? { ...a, lastActive: now }
+        : a
     )
+
+    // Only increment progress for tasks that are ACTUALLY running (running: true)
     state.tasks = state.tasks.map((t) => {
-      if (t.status === "in_progress" && t.progress < 95) {
-        const inc = Math.floor(Math.random() * 2)
-        return { ...t, progress: Math.min(95, t.progress + inc), updatedAt: now }
+      if (t.running === true && t.status === "in_progress" && t.progress < 90) {
+        const inc = Math.floor(Math.random() * 3) + 1
+        return { ...t, progress: Math.min(90, t.progress + inc), updatedAt: now }
       }
       return t
     })
+
     state.updatedAt = now
     writeFileSync(STATE_FILE, JSON.stringify(state, null, 2))
     console.log(`[${new Date().toLocaleTimeString()}] synced`)
@@ -27,6 +34,5 @@ function sync() {
   }
 }
 
-// Run immediately then every 30s
 sync()
 setInterval(sync, 30000)
