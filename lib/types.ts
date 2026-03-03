@@ -50,6 +50,10 @@ export type Project = {
   status: ProjectStatus
   tasks: Task[]
   createdAt: string
+  vision?: string
+  techStack?: string[]
+  features?: string[]
+  githubUrl?: string
 }
 
 export type Comment = {

@@ -8,7 +8,7 @@ type Session = {
   key: string
   model: string
   tokens: number
-  contextPct: number
+  contextTokens: number
   updatedAt: string
   channel: string
 }
@@ -79,7 +79,7 @@ export default function GatewayPanel() {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
-                  <div className="text-xs text-slate-400 font-mono">{s.contextPct ?? "—"}%</div>
+                  <div className="text-xs text-slate-400 font-mono">{s.contextTokens ? Math.round(s.contextTokens/2000) + "%" : "—"}%</div>
                   <div className="text-xs text-slate-600">ctx</div>
                 </div>
                 <div className="text-xs text-slate-600">
