@@ -8,6 +8,7 @@ import { AddTaskModal } from "@/components/AddTaskModal"
 import { MvpProgress } from "@/components/MvpProgress"
 import { Task } from "@/lib/types"
 import { AlertTriangle, Plus, Github, Lightbulb, Layers, CheckSquare, ExternalLink } from "lucide-react"
+import Link from "next/link"
 
 const statusColor = {
   planning: "text-yellow-400 border-yellow-400/40 bg-yellow-400/10",
@@ -51,7 +52,7 @@ export default function ProjectsPage() {
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1 min-w-0 pr-4">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-white font-bold font-mono text-lg">{project.name}</h2>
+                    <Link href={`/projects/${project.id}`} onClick={e => e.stopPropagation()} className="text-white font-bold font-mono text-lg hover:text-cyan-400 transition-colors">{project.name}</Link>
                     <span className={`px-2 py-0.5 rounded border font-mono text-xs font-bold ${statusColor[project.status]}`}>
                       {project.status.toUpperCase()}
                     </span>

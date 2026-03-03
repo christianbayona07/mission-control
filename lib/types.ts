@@ -54,6 +54,10 @@ export type Project = {
   techStack?: string[]
   features?: string[]
   githubUrl?: string
+  workflowProgress?: Record<string, boolean>
+  phase2?: string[]
+  dataStrategy?: string
+  technicalNotes?: string
 }
 
 export type Comment = {
