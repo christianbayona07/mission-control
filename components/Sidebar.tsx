@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Building2, Bot, FolderKanban, Activity, Building } from "lucide-react"
+import { LayoutDashboard, Building2, Bot, FolderKanban, Activity, Building, ClipboardList } from "lucide-react"
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -10,6 +10,7 @@ const nav = [
   { href: "/departments", label: "Departments", icon: Building2 },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/workflow", label: "Workflow", icon: ClipboardList },
 ]
 
 export function Sidebar() {
