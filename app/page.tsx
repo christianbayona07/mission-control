@@ -14,6 +14,7 @@ import { MvpProgress } from "@/components/MvpProgress"
 import { Agent, Task, Department } from "@/lib/types"
 import { Plus } from "lucide-react"
 import GitHubPanel from "@/components/GitHubPanel"
+import GatewayPanel from "@/components/GatewayPanel"
 
 const DEPARTMENTS: Department[] = [
   "Frontend Development",
@@ -128,7 +129,10 @@ export default function Dashboard() {
       </div>
 
       {/* GitHub Panel */}
-      <GitHubPanel />
+      <div className="grid grid-cols-2 gap-6">
+        <GitHubPanel />
+        <GatewayPanel />
+      </div>
 
       {/* Modals */}
       {assignTarget && (
