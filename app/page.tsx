@@ -13,6 +13,7 @@ import { LiveClock } from "@/components/LiveClock"
 import { MvpProgress } from "@/components/MvpProgress"
 import { Agent, Task, Department } from "@/lib/types"
 import { Plus } from "lucide-react"
+import GitHubPanel from "@/components/GitHubPanel"
 
 const DEPARTMENTS: Department[] = [
   "Frontend Development",
@@ -125,6 +126,9 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* GitHub Panel */}
+      <GitHubPanel />
 
       {/* Modals */}
       {assignTarget && (
